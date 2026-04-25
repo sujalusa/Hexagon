@@ -326,6 +326,160 @@ export class DataFetcher {
     };
   }
 
+  // ── Member detail (term dates, committee codes) ─────────────────────────────
+
+  async fetchMemberDetail(bioguideId: string): Promise<{
+    bioguideId: string;
+    fullName: string | null;
+    party: string | null;
+    state: string | null;
+    chamber: string | null;
+    termStart: string | null;
+    termEnd: string | null;
+  } | null> {
+    const raw = await congressFetch(`/member/${bioguideId}`);
+    if (isDataGap(raw) || raw === null) return null;
+    const d = (raw as Record<string, unknown>).member as Record<string, unknown> | undefined;
+    if (!d) return null;
+    const terms = Array.isArray(d.terms) ? (d.terms as Array<Record<string, unknown>>) : [];
+    const latest = terms[terms.length - 1];
+    const partyHistory = Array.isArray(d.partyHistory) ? (d.partyHistory as Array<Record<string, unknown>>) : [];
+    const party = (partyHistory[partyHistory.length - 1]?.partyAbbreviation as string | undefined) ?? null;
+    return {
+      bioguideId,
+      fullName: (d.directOrderName as string | undefined) ?? null,
+      party,
+      state: (d.state as string | undefined) ?? null,
+      chamber: (latest?.chamber as string | undefined) ?? null,
+      termStart: latest?.startYear ? String(latest.startYear) : null,
+      termEnd: latest?.endYear ? String(latest.endYear) : null,
+    };
+  }
+
+  /**
+   * Returns all current members of a chamber for a given state, with name + bioguide.
+   * Uses /member/{state} which returns the active delegation. The `district` field
+   * distinguishes House (numbered) from Senate (null).
+   */
+  async fetchStateDelegation(state: string, chamber: 'house' | 'senate'): Promise<Array<{ bioguideId: string; firstName: string; lastName: string; district: string | null; party: string | null }>> {
+    const raw = await congressFetch(`/member/${state}?limit=50&currentMember=true`);
+    if (isDataGap(raw) || raw === null) return [];
+    const members = (raw as Record<string, unknown>).members as unknown[];
+    if (!Array.isArray(members)) return [];
+
+    const all = members.map((m) => {
+      const member = m as Record<string, unknown>;
+      const partyName = String(member.partyName ?? '').toUpperCase();
+      const party = partyName.includes('REPUB') ? 'R' : partyName.includes('DEMOC') ? 'D' : partyName ? 'I' : null;
+      // Format here is "Lastname, Firstname Middle"
+      const nameStr = String(member.name ?? '');
+      let lastName = '';
+      let firstName = '';
+      if (nameStr.includes(',')) {
+        const [last, first] = nameStr.split(',').map(s => s.trim());
+        lastName = last;
+        firstName = (first.split(/\s+/)[0] ?? '');
+      } else {
+        const parts = nameStr.split(/\s+/);
+        lastName = parts[parts.length - 1] ?? '';
+        firstName = parts[0] ?? '';
+      }
+      const districtRaw = member.district;
+      const district = districtRaw === null || districtRaw === undefined ? null : String(districtRaw);
+      return {
+        bioguideId: String(member.bioguideId ?? ''),
+        firstName: firstName.toUpperCase(),
+        lastName: lastName.toUpperCase().replace(/[.]/g, ''),
+        district,
+        party,
+      };
+    }).filter(m => m.bioguideId);
+
+    // Senate members have null district; House members have numeric district.
+    return all.filter(m => chamber === 'senate' ? m.district === null : m.district !== null);
+  }
+
+  /**
+   * Resolves a stub ID (rep-001/sen-001) or BioGuide ID to a real BioGuide ID
+   * by searching Arizona members. Returns null if no match.
+   */
+  async resolveBioguideId(politicianId: string): Promise<string | null> {
+    if (!/^(rep|sen)-\d+$/i.test(politicianId)) {
+      return politicianId; // assume already a BioGuide ID
+    }
+    const chamber = politicianId.toLowerCase().startsWith('rep') ? 'house' : 'senate';
+    const raw = await congressFetch(`/member?state=AZ&chamber=${chamber}&limit=5&currentMember=true`);
+    if (isDataGap(raw) || raw === null) return null;
+    const members = (raw as Record<string, unknown>).members as unknown[];
+    if (!Array.isArray(members) || members.length === 0) return null;
+    const idx = parseInt(politicianId.replace(/\D/g, ''), 10) - 1;
+    const member = members[Math.min(idx, members.length - 1)] as Record<string, unknown>;
+    return (member.bioguideId as string | undefined) ?? null;
+  }
+
+  /**
+   * Computes party-line alignment for a member. For each of their N most recent
+   * roll-call votes, fetches the chamber-wide vote tally and counts whether the
+   * member sided with their own party's majority. Returns null if not enough data.
+   */
+  async computePartyAlignment(bioguideId: string, sampleSize = 10): Promise<{
+    alignmentPct: number;
+    sampleSize: number;
+    matched: number;
+  } | null> {
+    const votesRaw = await congressFetch(`/member/${bioguideId}/votes?limit=${sampleSize}`);
+    if (isDataGap(votesRaw) || votesRaw === null) return null;
+
+    const memberDetail = await this.fetchMemberDetail(bioguideId);
+    const memberParty = memberDetail?.party;
+    if (!memberParty) return null;
+
+    const voteList = (votesRaw as Record<string, unknown>).votes as unknown[];
+    if (!Array.isArray(voteList) || voteList.length === 0) return null;
+
+    let matched = 0;
+    let counted = 0;
+
+    for (const v of voteList) {
+      const vote = v as Record<string, unknown>;
+      const memberPos = String(vote.votePosition ?? '').toLowerCase();
+      if (memberPos !== 'yes' && memberPos !== 'no' && memberPos !== 'yea' && memberPos !== 'nay') continue;
+
+      const congress = vote.congress;
+      const chamber = String(vote.chamber ?? '').toLowerCase();
+      const session = vote.sessionNumber;
+      const rollNumber = vote.rollNumber;
+      if (!congress || !session || !rollNumber || !chamber) continue;
+
+      const chamberPath = chamber === 'senate' ? 'senate-vote' : 'house-vote';
+      const detailRaw = await congressFetch(`/${chamberPath}/${congress}/${session}/${rollNumber}`);
+      if (isDataGap(detailRaw) || detailRaw === null) continue;
+
+      const detail = (detailRaw as Record<string, unknown>);
+      const voteData = (detail.houseRollCallVote ?? detail.senateRollCallVote ?? detail.vote) as Record<string, unknown> | undefined;
+      if (!voteData) continue;
+
+      const partyTotals = voteData.partyVoteTotal ?? voteData.partyTotals ?? voteData.partyTotal;
+      const partyArr = Array.isArray(partyTotals) ? (partyTotals as Array<Record<string, unknown>>) : [];
+      const myParty = partyArr.find((p) => {
+        const code = String(p.party ?? p.partyAbbreviation ?? '').toUpperCase();
+        return code === memberParty.toUpperCase() || code.startsWith(memberParty.toUpperCase());
+      });
+      if (!myParty) continue;
+
+      const yea = Number(myParty.yeaTotal ?? myParty.yea ?? 0);
+      const nay = Number(myParty.nayTotal ?? myParty.nay ?? 0);
+      const partyMajorityYes = yea >= nay;
+      const memberYes = memberPos === 'yes' || memberPos === 'yea';
+
+      counted += 1;
+      if (memberYes === partyMajorityYes) matched += 1;
+    }
+
+    if (counted === 0) return null;
+    return { alignmentPct: Math.round((matched / counted) * 100), sampleSize: counted, matched };
+  }
+
   // ── DataGap helpers ──────────────────────────────────────────────────────────
 
   legislationDataGap(): DataGap {

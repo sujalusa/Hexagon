@@ -43,6 +43,9 @@ export function parseFecCandidates(raw: unknown): FecCandidateList | DataGap {
       ...(r.district !== undefined && r.district !== null
         ? { district: String(r.district) }
         : {}),
+      ...(typeof r.party === 'string' ? { party: r.party } : {}),
+      ...(typeof r.party_full === 'string' ? { party_full: r.party_full } : {}),
+      ...(typeof r.incumbent_challenge_full === 'string' ? { incumbent_challenge_full: r.incumbent_challenge_full } : {}),
     };
   });
 
@@ -184,7 +187,8 @@ export class FecClient {
       };
     }
 
-    let url = `${FEC_BASE_URL}/candidates/?state=${state}&api_key=${key}`;
+    // Default to most recent completed federal cycle so we get current incumbents/active candidates.
+    let url = `${FEC_BASE_URL}/candidates/?state=${state}&cycle=2024&per_page=100&api_key=${key}`;
     if (office !== undefined) url += `&office=${office}`;
     if (district !== undefined) url += `&district=${district}`;
 
@@ -231,6 +235,86 @@ export class FecClient {
       this.cache.set(url, { data: parsed, cachedAt, ttlMs: CACHE_TTL_MS });
     }
     return parsed;
+  }
+
+  /**
+   * Fetches the raw totals JSON. Exposes additional fields not in FinanceRecord.
+   */
+  async fetchCandidateTotalsRaw(candidateId: string): Promise<Record<string, unknown> | DataGap> {
+    const key = process.env.OPEN_FEC_API_KEY;
+    if (!key) return { description: 'OPEN_FEC_API_KEY not set', primarySources: ['api.open.fec.gov'] };
+    const url = `${FEC_BASE_URL}/candidate/${candidateId}/totals/?api_key=${key}&sort=-cycle&per_page=1`;
+    const result = await this.fetchUrl(url);
+    if (result !== null && typeof result === 'object' && 'description' in result) return result as DataGap;
+    const r = result as Record<string, unknown>;
+    const arr = Array.isArray(r?.results) ? (r.results as unknown[]) : [];
+    if (arr.length === 0) return { description: 'No totals reported for this candidate', primarySources: ['api.open.fec.gov'] };
+    return arr[0] as Record<string, unknown>;
+  }
+
+  /**
+   * Fetches the raw candidate detail JSON (party, incumbent_challenge, election_years…).
+   */
+  async fetchCandidateDetail(candidateId: string): Promise<Record<string, unknown> | DataGap> {
+    const key = process.env.OPEN_FEC_API_KEY;
+    if (!key) return { description: 'OPEN_FEC_API_KEY not set', primarySources: ['api.open.fec.gov'] };
+    const url = `${FEC_BASE_URL}/candidate/${candidateId}/?api_key=${key}`;
+    const result = await this.fetchUrl(url);
+    if (result !== null && typeof result === 'object' && 'description' in result) return result as DataGap;
+    const r = result as Record<string, unknown>;
+    const arr = Array.isArray(r?.results) ? (r.results as unknown[]) : [];
+    if (arr.length === 0) return { description: 'Candidate detail not found', primarySources: ['api.open.fec.gov'] };
+    return arr[0] as Record<string, unknown>;
+  }
+
+  /**
+   * Top contributing employers for a candidate (Schedule A, by_employer).
+   * Returns top N by aggregated contribution amount.
+   */
+  async fetchTopEmployers(candidateId: string, limit = 8): Promise<Array<{ employer: string; total: number; count: number }> | DataGap> {
+    const key = process.env.OPEN_FEC_API_KEY;
+    if (!key) return { description: 'OPEN_FEC_API_KEY not set', primarySources: ['api.open.fec.gov'] };
+    const url = `${FEC_BASE_URL}/schedules/schedule_a/by_employer/?candidate_id=${candidateId}&per_page=${limit}&sort=-total&api_key=${key}`;
+    const result = await this.fetchUrl(url);
+    if (result !== null && typeof result === 'object' && 'description' in result) return result as DataGap;
+    const r = result as Record<string, unknown>;
+    const arr = Array.isArray(r?.results) ? (r.results as unknown[]) : [];
+    return arr.map((row) => {
+      const x = row as Record<string, unknown>;
+      return {
+        employer: String(x.employer ?? '(not disclosed)'),
+        total: typeof x.total === 'number' ? x.total : 0,
+        count: typeof x.count === 'number' ? x.count : 0,
+      };
+    });
+  }
+
+  /**
+   * Contribution size buckets (Schedule A, by_size). Useful for individual vs whale donor split.
+   */
+  async fetchContributionSizes(candidateId: string): Promise<Array<{ sizeBucket: string; total: number }> | DataGap> {
+    const key = process.env.OPEN_FEC_API_KEY;
+    if (!key) return { description: 'OPEN_FEC_API_KEY not set', primarySources: ['api.open.fec.gov'] };
+    const url = `${FEC_BASE_URL}/schedules/schedule_a/by_size/?candidate_id=${candidateId}&api_key=${key}`;
+    const result = await this.fetchUrl(url);
+    if (result !== null && typeof result === 'object' && 'description' in result) return result as DataGap;
+    const r = result as Record<string, unknown>;
+    const arr = Array.isArray(r?.results) ? (r.results as unknown[]) : [];
+    const labels: Record<string, string> = {
+      '0': '$200 and under',
+      '200': '$200.01 – $499',
+      '500': '$500 – $999',
+      '1000': '$1,000 – $1,999',
+      '2000': '$2,000+',
+    };
+    return arr.map((row) => {
+      const x = row as Record<string, unknown>;
+      const sizeKey = String(x.size ?? '');
+      return {
+        sizeBucket: labels[sizeKey] ?? `Size ${sizeKey}`,
+        total: typeof x.total === 'number' ? x.total : 0,
+      };
+    });
   }
 
   /**

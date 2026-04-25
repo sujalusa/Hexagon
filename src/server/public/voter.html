@@ -6,7 +6,7 @@
   <title>Hexagon — Arizona Candidate Breakdown</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif; background: #f5f3ee; color: #1a1a1a; min-height: 100vh; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif; background: #f5f3ee; color: #1a1a1a; min-height: 100vh; -webkit-font-smoothing: antialiased; }
 
     header { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; }
     .logo-mark { font-size: 1.2rem; }
@@ -17,7 +17,6 @@
     .switch-link:hover { color: #1a1a1a; }
 
     .page { max-width: 1240px; margin: 0 auto; padding: 24px 16px 80px; }
-
     .page-title { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 4px; }
     .page-sub { font-size: 0.9rem; color: #6b7280; margin-bottom: 20px; }
 
@@ -31,14 +30,14 @@
     .compare-bar.show { display: flex; }
     .compare-bar .cb-text { font-size: 0.85rem; font-weight: 600; }
     .compare-bar button { margin-left: auto; padding: 6px 14px; border: none; border-radius: 8px; background: #1a1a1a; color: #fff; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
-    .compare-bar button.secondary { background: #f5f3ee; color: #374151; border: 1px solid #e5e7eb; }
+    .compare-bar button.secondary { background: #f5f3ee; color: #374151; border: 1px solid #e5e7eb; margin-left: 0; }
 
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; margin-bottom: 28px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; margin-bottom: 28px; }
     .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px; cursor: pointer; transition: border-color 0.12s, box-shadow 0.12s; position: relative; }
     .card:hover { border-color: #1a1a1a; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
     .card.selected { border-color: #1a1a1a; box-shadow: 0 0 0 2px rgba(26,26,26,0.08); }
     .card-row { display: flex; align-items: flex-start; gap: 12px; }
-    .card-av { width: 40px; height: 40px; border-radius: 50%; background: #f5f3ee; border: 2px solid #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; color: #374151; flex-shrink: 0; }
+    .card-av { width: 40px; height: 40px; border-radius: 50%; background: #eef2ff; border: 2px solid #e0e7ff; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; color: #1e3a8a; flex-shrink: 0; }
     .card-body { flex: 1; min-width: 0; }
     .card-name { font-size: 0.98rem; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 2px; }
     .card-meta { font-size: 0.78rem; color: #6b7280; margin-bottom: 10px; }
@@ -47,6 +46,9 @@
     .tag.house { background: #eef6ff; color: #1d4ed8; border-color: #c7dafd; }
     .tag.senate { background: #fdf2f8; color: #be185d; border-color: #fbcfe8; }
     .tag.president { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+    .tag.party-r { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+    .tag.party-d { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+    .tag.party-i { background: #f3f4f6; color: #374151; border-color: #d1d5db; }
     .card-checkbox { position: absolute; top: 12px; right: 12px; width: 22px; height: 22px; border: 1.5px solid #d1d5db; border-radius: 6px; background: #fff; display: flex; align-items: center; justify-content: center; }
     .card-checkbox.checked { background: #1a1a1a; border-color: #1a1a1a; }
     .card-checkbox.checked::after { content: "✓"; color: #fff; font-size: 0.78rem; font-weight: 700; }
@@ -54,61 +56,112 @@
     .empty, .error-state { text-align: center; padding: 56px 24px; color: #6b7280; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; }
     .empty .icon, .error-state .icon { font-size: 2rem; margin-bottom: 10px; }
     .error-state .icon { color: #d97706; }
-
     .skeleton { background: linear-gradient(90deg, #f5f3ee 0%, #efebe2 50%, #f5f3ee 100%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 6px; }
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-    /* Digest panel */
-    .digest-section { margin-top: 28px; }
-    .digest-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-    .digest-header h2 { font-size: 1.1rem; font-weight: 800; letter-spacing: -0.02em; }
-    .digest-header .meta { font-size: 0.82rem; color: #6b7280; }
+    /* ────────────────  Dossier (matches screenshot)  ──────────────── */
+    .dossier-section { margin-top: 28px; }
+    .dossier-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .dossier-header h2 { font-size: 1.1rem; font-weight: 800; letter-spacing: -0.02em; }
+    .dossier-header .meta { font-size: 0.82rem; color: #6b7280; }
 
-    .digest-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 22px; margin-bottom: 14px; }
-    .digest-top { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid #f3f4f6; }
-    .digest-top .av { width: 52px; height: 52px; border-radius: 50%; background: #f5f3ee; border: 2px solid #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; font-weight: 700; color: #374151; flex-shrink: 0; }
-    .digest-top .name { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 3px; }
-    .digest-top .sub { font-size: 0.85rem; color: #6b7280; }
-    .integrity-badge { margin-left: auto; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; font-size: 0.85rem; font-weight: 600; padding: 6px 12px; border-radius: 14px; }
-    .integrity-badge.warn { background: #fef3c7; color: #92400e; border-color: #fde68a; }
-    .integrity-badge.low { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+    .dossier { background: #f5f3ee; border-radius: 18px; padding: 22px 24px; border: 1px solid #e8e5dd; }
 
-    .stat-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 22px; }
-    .stat-tile { background: #f9f9f7; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; }
-    .stat-tile .st-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; margin-bottom: 4px; }
-    .stat-tile .st-val { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 2px; }
-    .stat-tile .st-sub { font-size: 0.74rem; color: #6b7280; }
-    .green { color: #16a34a; }
-    .red { color: #dc2626; }
-    .amber { color: #d97706; }
+    .doss-top { display: flex; align-items: center; gap: 16px; padding-bottom: 16px; border-bottom: 1px solid #e8e5dd; }
+    .doss-av { width: 56px; height: 56px; border-radius: 50%; background: #dbeafe; color: #1e3a8a; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; flex-shrink: 0; letter-spacing: -0.01em; }
+    .doss-name { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; line-height: 1.2; margin-bottom: 3px; }
+    .doss-sub { font-size: 0.86rem; color: #6b7280; }
+    .integrity { margin-left: auto; background: #ecfdf5; color: #166534; border: 1px solid #bbf7d0; font-size: 0.86rem; font-weight: 600; padding: 7px 14px; border-radius: 16px; white-space: nowrap; }
+    .integrity.warn { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+    .integrity.low { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
 
-    .digest-section-block { margin-bottom: 18px; }
-    .ds-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; margin-bottom: 10px; }
-    .ds-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 0.86rem; }
-    .ds-row:last-child { border-bottom: none; }
-    .ds-row .label { color: #6b7280; }
-    .ds-row .val { font-weight: 600; color: #1a1a1a; }
-    .ds-source { font-size: 0.72rem; color: #9ca3af; margin-top: 8px; font-style: italic; }
+    .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding-top: 16px; padding-bottom: 6px; }
+    .stat { background: #fff; border: 1px solid #ece9e0; border-radius: 12px; padding: 14px 16px; }
+    .stat-label { font-size: 0.78rem; color: #6b7280; font-weight: 500; margin-bottom: 6px; }
+    .stat-val { font-size: 1.85rem; font-weight: 800; letter-spacing: -0.035em; line-height: 1; margin-bottom: 4px; }
+    .stat-val.green { color: #166534; }
+    .stat-val.red { color: #b91c1c; }
+    .stat-sub { font-size: 0.76rem; color: #6b7280; }
 
-    .gap-card { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; padding: 12px 14px; font-size: 0.82rem; color: #9a3412; line-height: 1.55; }
+    .pill-nav { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 4px; }
+    .pn { background: #fff; border: 1px solid #e8e5dd; color: #374151; font-size: 0.85rem; font-weight: 500; padding: 8px 16px; border-radius: 10px; cursor: pointer; }
+    .pn:hover { border-color: #1a1a1a; }
 
-    .vote-list { display: flex; flex-direction: column; gap: 0; }
-    .vote-item { display: grid; grid-template-columns: 70px 1fr auto; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f3f4f6; align-items: center; font-size: 0.83rem; }
-    .vote-item:last-child { border-bottom: none; }
-    .vote-id { font-weight: 700; color: #1a1a1a; font-size: 0.78rem; }
-    .vote-title { color: #374151; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .vote-pos { font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
-    .vp-yea { background: #ecfdf5; color: #047857; }
-    .vp-nay { background: #fef2f2; color: #b91c1c; }
-    .vp-abs { background: #f3f4f6; color: #6b7280; }
+    .panel { background: #fff; border: 1px solid #ece9e0; border-radius: 14px; padding: 18px 22px; margin-top: 14px; }
+    .panel-title { font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+    .demo-badge { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #92400e; background: #fef3c7; border: 1px solid #fde68a; padding: 2px 7px; border-radius: 10px; }
+    .live-badge { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #166534; background: #ecfdf5; border: 1px solid #bbf7d0; padding: 2px 7px; border-radius: 10px; }
+    .bar-row { display: grid; grid-template-columns: 130px 1fr 60px; gap: 10px; align-items: center; padding: 6px 0; font-size: 0.84rem; }
+    .bar-track { height: 8px; background: #f3f1ea; border-radius: 4px; overflow: hidden; }
+    .bar-fill { height: 100%; background: #1a1a1a; border-radius: 4px; }
+    .bar-fill.indiv { background: #3b82f6; }
+    .bar-fill.pac { background: #ef4444; }
+    .bar-fill.self { background: #10b981; }
+    .bar-fill.size { background: #6366f1; }
+    .bar-val { font-weight: 600; color: #1a1a1a; text-align: right; font-variant-numeric: tabular-nums; }
+    .bar-label { color: #374151; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-    /* Comparison view */
+    /* Promise list */
+    .promise { display: grid; grid-template-columns: 14px 1fr auto; gap: 12px; padding: 14px 0; border-bottom: 1px solid #f3f1ea; align-items: flex-start; }
+    .promise:first-of-type { padding-top: 6px; }
+    .promise:last-of-type { border-bottom: none; padding-bottom: 6px; }
+    .pdot { width: 10px; height: 10px; border-radius: 50%; margin-top: 7px; }
+    .pdot.kept { background: #65a30d; }
+    .pdot.broken { background: #b91c1c; }
+    .pdot.partial { background: #d97706; }
+    .pdot.pending { background: #9ca3af; }
+    .pquote { font-size: 0.96rem; color: #1a1a1a; font-weight: 500; margin-bottom: 5px; line-height: 1.45; }
+    .psrc { font-size: 0.82rem; color: #9ca3af; margin-bottom: 2px; }
+    .pout { font-size: 0.82rem; line-height: 1.45; }
+    .pout.kept { color: #166534; }
+    .pout.broken { color: #b91c1c; }
+    .pout.partial { color: #92400e; }
+    .pstat { font-size: 0.78rem; font-weight: 500; padding: 4px 12px; border-radius: 14px; align-self: flex-start; margin-top: 4px; white-space: nowrap; }
+    .pstat.kept { background: #ecfdf5; color: #166534; }
+    .pstat.broken { background: #fef2f2; color: #b91c1c; }
+    .pstat.partial { background: #fff7ed; color: #c2410c; }
+    .pstat.pending { background: #f3f4f6; color: #6b7280; }
+
+    /* Drift */
+    .drift-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .drift-card { background: #f5f3ee; border-radius: 12px; padding: 16px 18px; }
+    .drift-aud { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #6b7280; margin-bottom: 10px; }
+    .drift-quote { font-size: 0.95rem; font-style: italic; color: #1a1a1a; line-height: 1.5; padding-left: 12px; border-left: 3px solid #d1d5db; margin-bottom: 12px; }
+    .drift-date { font-size: 0.78rem; color: #9ca3af; }
+    .drift-note { background: #fef9e7; border: 1px solid #f6e7b8; border-radius: 10px; padding: 11px 16px; font-size: 0.86rem; color: #78350f; margin-top: 14px; }
+    .drift-cta { display: flex; align-items: center; justify-content: center; gap: 6px; background: #fff; border: 1px solid #e8e5dd; border-radius: 10px; padding: 12px; margin-top: 12px; font-size: 0.92rem; font-weight: 500; color: #1a1a1a; cursor: pointer; }
+    .drift-cta:hover { border-color: #1a1a1a; }
+
+    /* Ethics gate */
+    .ethics { background: #fef2f2; border: 1px solid #fecaca; border-radius: 14px; padding: 18px 22px; margin-top: 14px; }
+    .ethics-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .ethics-dot { width: 9px; height: 9px; border-radius: 50%; background: #b91c1c; }
+    .ethics-title { font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #b91c1c; }
+    .ethics-flag { display: grid; grid-template-columns: 18px 1fr; gap: 10px; padding: 12px 0; border-bottom: 1px solid #fde2e2; align-items: flex-start; }
+    .ethics-flag:last-child { border-bottom: none; padding-bottom: 0; }
+    .ethics-flag:first-child { padding-top: 0; }
+    .ethics-tri { width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 13px solid #b91c1c; margin-top: 4px; }
+    .ethics-text { font-size: 0.93rem; color: #991b1b; line-height: 1.5; font-weight: 500; }
+
+    /* Finance + Voting (real-data row) */
+    .real-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+    @media (max-width: 768px) { .real-row { grid-template-columns: 1fr; } }
+    .real-stat { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #f3f1ea; font-size: 0.88rem; }
+    .real-stat:last-child { border-bottom: none; }
+    .real-stat .l { color: #6b7280; }
+    .real-stat .v { font-weight: 600; }
+    .gap-card { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; padding: 11px 14px; font-size: 0.82rem; color: #9a3412; line-height: 1.5; }
+    .src-line { font-size: 0.74rem; color: #9ca3af; margin-top: 8px; font-style: italic; }
+
+    /* Comparison */
     .compare-grid { display: grid; gap: 14px; }
     .compare-grid.cols-2 { grid-template-columns: 1fr 1fr; }
     .compare-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
     .compare-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+    @media (max-width: 1100px) { .compare-grid.cols-3, .compare-grid.cols-4 { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 768px) { .compare-grid { grid-template-columns: 1fr !important; } .stat-row { grid-template-columns: repeat(2, 1fr); } .drift-grid { grid-template-columns: 1fr; } }
 
-    /* Chat panel (MCP) */
+    /* Chat */
     .chat-section { margin-top: 32px; }
     .chat-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden; }
     .chat-head { padding: 14px 18px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; }
@@ -126,11 +179,9 @@
     .msg-row.user .msg-bubble { background: #1a1a1a; color: #fff; border-bottom-right-radius: 4px; }
     .msg-row.bot .msg-bubble { background: #f9f9f7; border: 1px solid #e5e7eb; color: #374151; border-bottom-left-radius: 4px; }
     .tool-tag { display: inline-block; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; background: #fff; border: 1px solid #e5e7eb; padding: 2px 7px; border-radius: 8px; margin-bottom: 5px; }
-
     .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
     .chip { background: #f5f3ee; border: 1px solid #e5e7eb; color: #374151; font-size: 0.78rem; padding: 5px 12px; border-radius: 20px; cursor: pointer; }
     .chip:hover { border-color: #1a1a1a; color: #1a1a1a; }
-
     .chat-input-row { display: flex; gap: 8px; align-items: flex-end; background: #f9f9f7; border: 1px solid #e5e7eb; border-radius: 12px; padding: 10px; }
     textarea#chat-q { flex: 1; border: none; outline: none; font-size: 0.88rem; font-family: inherit; resize: none; background: transparent; min-height: 36px; max-height: 120px; line-height: 1.5; }
     textarea#chat-q::placeholder { color: #9ca3af; }
@@ -138,14 +189,8 @@
     .send-btn:hover { background: #333; }
     .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .send-btn svg { width: 14px; height: 14px; fill: #fff; }
-
     .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid #e5e7eb; border-top-color: #1a1a1a; border-radius: 50%; animation: spin 0.6s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    @media (max-width: 768px) {
-      .stat-tiles { grid-template-columns: repeat(2, 1fr); }
-      .compare-grid.cols-2, .compare-grid.cols-3, .compare-grid.cols-4 { grid-template-columns: 1fr; }
-    }
   </style>
 </head>
 <body>
@@ -159,9 +204,8 @@
 
   <div class="page">
     <h1 class="page-title">Arizona Candidate Breakdown</h1>
-    <p class="page-sub">Every federal candidate registered in Arizona — campaign finance, voting record where available, and an MCP-powered Q&A panel below. All values cite their source.</p>
+    <p class="page-sub">Every federal candidate registered in Arizona — with promise tracking, language drift detection, ethics flags, and an MCP-powered Q&amp;A panel below.</p>
 
-    <!-- Filters -->
     <div class="filter-row">
       <span class="filter-pill active" data-office="" onclick="setOffice(this,'')">All offices</span>
       <span class="filter-pill" data-office="H" onclick="setOffice(this,'H')">House</span>
@@ -170,20 +214,15 @@
       <span class="filter-meta" id="filter-meta">Loading…</span>
     </div>
 
-    <!-- Compare bar -->
     <div class="compare-bar" id="compare-bar">
       <span class="cb-text" id="compare-text">0 selected</span>
       <button class="secondary" onclick="clearSelection()">Clear</button>
       <button onclick="renderComparison()">Compare side-by-side</button>
     </div>
 
-    <!-- Candidate grid -->
     <div id="grid" class="grid"></div>
+    <div id="dossier-out" class="dossier-section"></div>
 
-    <!-- Digest output -->
-    <div id="digest-out" class="digest-section"></div>
-
-    <!-- AI Chat panel (MCP) -->
     <div class="chat-section">
       <div class="chat-card">
         <div class="chat-head">
@@ -211,19 +250,36 @@
   </div>
 
   <script>
-    // ── State ───────────────────────────────────────────────────────────────
+    const urlParams = new URLSearchParams(location.search);
     let allCandidates = [];
     let visibleCandidates = [];
-    let selected = new Map(); // candidateId -> summary
-    let currentOffice = '';
+    let selected = new Map();
+    let currentOffice = urlParams.get('office') || '';
     const digestCache = new Map();
 
     function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-    function initials(name) { return String(name||'?').split(/\s|,/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase() || '?'; }
-    function fmtMoney(n) { if (n === null || n === undefined) return '—'; return '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 }); }
-    function pct(n) { return n === null || n === undefined ? '—' : Math.round(n) + '%'; }
+    function initials(name) {
+      const parts = String(name||'?').split(/[\s,]+/).filter(Boolean);
+      if (parts.length === 0) return '?';
+      return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+    }
+    function fmtMoney(n) { if (n == null) return '—'; return '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 }); }
+    function renderBar(label, cls, percent) {
+      const p = Math.max(0, Math.min(100, percent || 0));
+      return `<div class="bar-row"><div class="bar-label">${esc(label)}</div><div class="bar-track"><div class="bar-fill ${cls}" style="width:${p}%"></div></div><div class="bar-val">${p.toFixed(0)}%</div></div>`;
+    }
+    function shortName(name, party, state) {
+      // Convert "JANE SMITH FOR US SENATE" or "SMITH, JANE" → "Jane Smith"
+      let n = String(name||'').replace(/\s+FOR\s+.*$/i, '').replace(/\s+(US|U\.S\.)\s+(SENATE|HOUSE|CONGRESS|PRESIDENT).*$/i, '');
+      if (n.includes(',')) {
+        const [last, first] = n.split(',').map(s => s.trim());
+        n = `${first} ${last}`;
+      }
+      n = n.split(/\s+/).map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
+      const tail = party && state ? ` (${party}-${state})` : '';
+      return n + tail;
+    }
 
-    // ── Initial fetch ───────────────────────────────────────────────────────
     async function loadCandidates() {
       const grid = document.getElementById('grid');
       grid.innerHTML = '';
@@ -258,6 +314,12 @@
       loadCandidates();
     }
 
+    function partyClass(party) {
+      if (party === 'R') return 'party-r';
+      if (party === 'D') return 'party-d';
+      return 'party-i';
+    }
+
     function renderGrid() {
       const grid = document.getElementById('grid');
       const meta = document.getElementById('filter-meta');
@@ -269,21 +331,22 @@
       grid.innerHTML = '';
       for (const c of visibleCandidates) {
         const officeTag = c.office === 'House' ? 'house' : c.office === 'Senate' ? 'senate' : c.office === 'President' ? 'president' : '';
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.dataset.id = c.candidateId;
         const isSel = selected.has(c.candidateId);
-        if (isSel) card.classList.add('selected');
+        const display = shortName(c.name, c.party, c.state);
+        const card = document.createElement('div');
+        card.className = 'card' + (isSel ? ' selected' : '');
+        card.dataset.id = c.candidateId;
+        const incum = c.incumbencyStatus ? ` · ${esc(c.incumbencyStatus)}` : '';
         card.innerHTML = `
           <div class="card-checkbox ${isSel ? 'checked' : ''}" onclick="event.stopPropagation(); toggleSelect('${esc(c.candidateId)}')"></div>
           <div class="card-row">
-            <div class="card-av">${initials(c.name)}</div>
+            <div class="card-av">${initials(display)}</div>
             <div class="card-body">
-              <div class="card-name">${esc(c.name)}</div>
-              <div class="card-meta">${esc(c.candidateId)}${c.district ? ' · District ' + esc(c.district) : ''}</div>
+              <div class="card-name">${esc(display)}</div>
+              <div class="card-meta">${esc(c.candidateId)}${c.district ? ' · District ' + esc(c.district) : ''}${incum}</div>
               <div class="card-tags">
                 <span class="tag ${officeTag}">${esc(c.office)}</span>
-                ${c.officeCode ? `<span class="tag">${esc(c.officeCode)}</span>` : ''}
+                <span class="tag ${partyClass(c.party)}">${esc(c.partyFull || c.party || '?')}</span>
               </div>
             </div>
           </div>`;
@@ -298,10 +361,8 @@
       if (selected.has(id)) selected.delete(id);
       else if (selected.size < 4) selected.set(id, c);
       else { alert('You can compare up to 4 candidates at once.'); return; }
-      renderGrid();
-      updateCompareBar();
+      renderGrid(); updateCompareBar();
     }
-
     function updateCompareBar() {
       const bar = document.getElementById('compare-bar');
       const txt = document.getElementById('compare-text');
@@ -309,15 +370,11 @@
       bar.classList.add('show');
       txt.textContent = `${selected.size} selected for comparison`;
     }
-
     function clearSelection() {
-      selected.clear();
-      renderGrid();
-      updateCompareBar();
-      document.getElementById('digest-out').innerHTML = '';
+      selected.clear(); renderGrid(); updateCompareBar();
+      document.getElementById('dossier-out').innerHTML = '';
     }
 
-    // ── Digest fetch + render ───────────────────────────────────────────────
     async function fetchDigest(c) {
       if (digestCache.has(c.candidateId)) return digestCache.get(c.candidateId);
       const url = `/api/voter/candidate-digest/${encodeURIComponent(c.candidateId)}?name=${encodeURIComponent(c.name)}&office=${encodeURIComponent(c.officeCode || '')}&district=${encodeURIComponent(c.district || '')}`;
@@ -328,122 +385,227 @@
     }
 
     async function openDigest(c) {
-      const out = document.getElementById('digest-out');
-      out.innerHTML = `<div class="digest-header"><h2>Candidate digest</h2><span class="meta">Loading ${esc(c.name)}…</span></div><div class="digest-card"><div class="spin"></div></div>`;
+      const out = document.getElementById('dossier-out');
+      out.innerHTML = `<div class="dossier-header"><h2>Candidate dossier</h2><span class="meta">Loading ${esc(shortName(c.name,c.party,c.state))}…</span></div><div class="dossier"><div class="spin"></div></div>`;
       out.scrollIntoView({ behavior: 'smooth', block: 'start' });
       try {
         const d = await fetchDigest(c);
-        out.innerHTML = `<div class="digest-header"><h2>Candidate digest</h2><span class="meta">Single-candidate detail · ${esc(c.candidateId)}</span></div>` + renderDigestCard(d);
+        out.innerHTML = `<div class="dossier-header"><h2>Candidate dossier</h2><span class="meta">${esc(c.candidateId)}</span></div>` + renderDossier(d);
       } catch (err) {
         out.innerHTML = `<div class="error-state"><div class="icon">⚠</div>${esc(String(err))}</div>`;
       }
     }
 
-    function integrityClass(percent) {
-      if (percent >= 67) return '';
-      if (percent >= 34) return 'warn';
+    function integrityClass(pct) {
+      if (pct >= 70) return '';
+      if (pct >= 50) return 'warn';
       return 'low';
     }
 
-    function renderDigestCard(d) {
+    function renderDossier(d) {
       const s = d.summary;
-      const f = d.finance;
-      const v = d.voting;
-      const dc = d.dataCompleteness;
-      const trk = d.trackers;
-      const integrityCls = integrityClass(dc.percent);
+      const stats = d.stats;
+      const display = shortName(s.name, s.party, s.state);
+      const officeFull = s.office === 'Senate' ? 'U.S. Senate' : s.office === 'House' ? 'U.S. House' : s.office === 'President' ? 'U.S. President' : s.office;
+      const partyLine = s.partyFull ? s.partyFull + (s.incumbencyStatus ? ` · ${s.incumbencyStatus}` : '') : '';
+      const committeeLine = (s.committees && s.committees.length) ? `Committees: ${s.committees.join(', ')}` : '';
+      const subParts = [officeFull, partyLine, s.termRange, committeeLine].filter(Boolean).join(' · ');
 
-      let html = `<div class="digest-card">`;
-      html += `<div class="digest-top">
-        <div class="av">${initials(s.name)}</div>
-        <div>
-          <div class="name">${esc(s.name)}</div>
-          <div class="sub">${esc(s.office)}${s.district ? ' · District ' + esc(s.district) : ''} · ${esc(s.state)} · FEC ${esc(s.candidateId)}</div>
-        </div>
-        <div class="integrity-badge ${integrityCls}">${dc.percent}% data completeness</div>
-      </div>`;
+      let html = `<div class="dossier">`;
 
-      // Stat tiles — only real data
-      html += `<div class="stat-tiles">
-        <div class="stat-tile"><div class="st-label">Total Raised</div><div class="st-val">${fmtMoney(f.totalRaised)}</div><div class="st-sub">FEC reported</div></div>
-        <div class="stat-tile"><div class="st-label">Reporting Period</div><div class="st-val" style="font-size:0.95rem;font-weight:700;line-height:1.4">${f.reportingPeriod ? esc(f.reportingPeriod.start.slice(0,10)) + ' →<br>' + esc(f.reportingPeriod.end.slice(0,10)) : '—'}</div><div class="st-sub">FEC filings</div></div>
-        <div class="stat-tile"><div class="st-label">Votes Recorded</div><div class="st-val">${v.voteCount}</div><div class="st-sub">${v.voteCount > 0 ? 'last 20 cast' : 'not in office'}</div></div>
-        <div class="stat-tile"><div class="st-label">Yea / Nay</div><div class="st-val"><span class="green">${v.yeaCount}</span> / <span class="red">${v.nayCount}</span></div><div class="st-sub">${v.absentCount} absent</div></div>
-      </div>`;
+      // Top header
+      html += `
+        <div class="doss-top">
+          <div class="doss-av">${initials(display)}</div>
+          <div>
+            <div class="doss-name">${esc(display)}</div>
+            <div class="doss-sub">${esc(subParts)}</div>
+          </div>
+          <div class="integrity ${integrityClass(d.integrityScore)}">${d.integrityScore}% integrity score</div>
+        </div>`;
 
-      // Finance section
-      html += `<div class="digest-section-block"><div class="ds-label">💰 Campaign Finance</div>`;
-      if (f.gap) {
-        html += `<div class="gap-card">📭 ${esc(f.gap)}</div>`;
-      } else {
-        html += `<div class="ds-row"><span class="label">Total raised this cycle</span><span class="val">${fmtMoney(f.totalRaised)}</span></div>`;
-        if (f.reportingPeriod) html += `<div class="ds-row"><span class="label">Reporting period</span><span class="val">${esc(f.reportingPeriod.start)} — ${esc(f.reportingPeriod.end)}</span></div>`;
-        html += `<div class="ds-source">Source: ${esc(f.source)}</div>`;
+      // Stat row — votes-vs-party is REAL (from Congress.gov), others are demo
+      const vvp = stats.votesVsParty !== null ? `${stats.votesVsParty}%` : '—';
+      html += `
+        <div class="stat-row">
+          <div class="stat">
+            <div class="stat-label">Promises tracked</div>
+            <div class="stat-val">${stats.promisesTracked}</div>
+            <div class="stat-sub">demo data</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Kept</div>
+            <div class="stat-val green">${stats.kept}</div>
+            <div class="stat-sub">${stats.keptPct}% · demo</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Broken</div>
+            <div class="stat-val red">${stats.broken}</div>
+            <div class="stat-sub">${stats.brokenPct}% · demo</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Votes vs. party</div>
+            <div class="stat-val">${vvp}</div>
+            <div class="stat-sub">${esc(stats.votesVsPartyMeta)}</div>
+          </div>
+        </div>`;
+
+      // Pill nav (anchor links)
+      const uid = s.candidateId.replace(/[^A-Za-z0-9]/g, '');
+      html += `
+        <div class="pill-nav">
+          <span class="pn" onclick="document.getElementById('p-${uid}').scrollIntoView({behavior:'smooth',block:'start'})">Promises</span>
+          <span class="pn" onclick="document.getElementById('v-${uid}').scrollIntoView({behavior:'smooth',block:'start'})">Voting record</span>
+          <span class="pn" onclick="document.getElementById('l-${uid}').scrollIntoView({behavior:'smooth',block:'start'})">Language drift</span>
+          <span class="pn" onclick="document.getElementById('f-${uid}').scrollIntoView({behavior:'smooth',block:'start'})">Donor influence</span>
+          <span class="pn" onclick="document.getElementById('e-${uid}').scrollIntoView({behavior:'smooth',block:'start'})">Ethics gate</span>
+        </div>`;
+
+      // Promise tracker (demo)
+      html += `<div class="panel" id="p-${uid}"><div class="panel-title"><span>Promise Tracker</span>${d.promisesIsDemo ? '<span class="demo-badge">demo data</span>' : '<span class="live-badge">live</span>'}</div>`;
+      for (const p of d.promises) {
+        const outClass = p.status === 'kept' ? 'kept' : p.status === 'broken' ? 'broken' : p.status === 'partial' ? 'partial' : '';
+        const statLabel = p.status.charAt(0).toUpperCase() + p.status.slice(1);
+        html += `
+          <div class="promise">
+            <div class="pdot ${p.status}"></div>
+            <div>
+              <div class="pquote">&ldquo;${esc(p.quote)}&rdquo;</div>
+              <div class="psrc">${esc(p.sourceLine)}</div>
+              ${p.outcomeLine ? `<div class="pout ${outClass}">${esc(p.outcomeLine)}</div>` : ''}
+            </div>
+            <div class="pstat ${p.status}">${esc(statLabel)}</div>
+          </div>`;
       }
       html += `</div>`;
 
-      // Voting section
-      html += `<div class="digest-section-block"><div class="ds-label">🗳 Voting Record</div>`;
+      // Language drift (demo)
+      html += `<div class="panel" id="l-${uid}"><div class="panel-title"><span>Language Drift — Same Topic, Different Rooms</span>${d.driftsIsDemo ? '<span class="demo-badge">demo data</span>' : '<span class="live-badge">live</span>'}</div>`;
+      for (const dr of d.drifts) {
+        html += `
+          <div class="drift-grid">
+            <div class="drift-card">
+              <div class="drift-aud">${esc(dr.a.audience)}</div>
+              <div class="drift-quote">${esc(dr.a.quote)}</div>
+              <div class="drift-date">${esc(dr.a.date)}</div>
+            </div>
+            <div class="drift-card">
+              <div class="drift-aud">${esc(dr.b.audience)}</div>
+              <div class="drift-quote">${esc(dr.b.quote)}</div>
+              <div class="drift-date">${esc(dr.b.date)}</div>
+            </div>
+          </div>
+          <div class="drift-note">${esc(dr.divergenceNote)}</div>`;
+      }
+      html += `<div class="drift-cta">Analyze all drift patterns ↗</div></div>`;
+
+      // Voting record (real)
+      html += `<div class="panel" id="v-${uid}"><div class="panel-title"><span>Voting Record</span><span class="live-badge">live · congress.gov</span></div>`;
+      const v = d.voting;
       if (v.gap && v.voteCount === 0) {
         html += `<div class="gap-card">📭 ${esc(v.gap)}</div>`;
       } else {
-        html += `<div class="ds-row"><span class="label">Member name</span><span class="val">${esc(v.politicianName || '—')}</span></div>
-                 <div class="ds-row"><span class="label">Total votes (recent)</span><span class="val">${v.voteCount}</span></div>
-                 <div class="ds-row"><span class="label">Yea / Nay / Absent</span><span class="val">${v.yeaCount} / ${v.nayCount} / ${v.absentCount}</span></div>`;
+        html += `<div class="real-stat"><span class="l">Member</span><span class="v">${esc(v.politicianName || '—')}</span></div>
+                 <div class="real-stat"><span class="l">Recent votes</span><span class="v">${v.voteCount}</span></div>
+                 <div class="real-stat"><span class="l">Yea / Nay / Absent</span><span class="v">${v.yeaCount} / ${v.nayCount} / ${v.absentCount}</span></div>`;
         if (v.recentVotes.length > 0) {
-          html += `<div style="margin-top:14px"><div class="ds-label" style="margin-bottom:8px">Recent votes</div><div class="vote-list">`;
-          for (const vote of v.recentVotes) {
-            const cls = vote.vote === 'yea' ? 'vp-yea' : vote.vote === 'nay' ? 'vp-nay' : 'vp-abs';
-            html += `<div class="vote-item"><span class="vote-id">${esc(vote.billId)}</span><span class="vote-title" title="${esc(vote.billTitle)}">${esc(vote.billTitle)}</span><span class="vote-pos ${cls}">${esc(vote.vote)}</span></div>`;
+          html += `<div style="margin-top:14px">`;
+          for (const vote of v.recentVotes.slice(0, 5)) {
+            const cls = vote.vote === 'yea' ? '#166534' : vote.vote === 'nay' ? '#b91c1c' : '#6b7280';
+            html += `<div class="real-stat"><span class="l">${esc(vote.billId)} — ${esc(vote.billTitle).slice(0,60)}</span><span class="v" style="color:${cls};text-transform:uppercase;font-size:0.78rem">${esc(vote.vote)}</span></div>`;
           }
-          html += `</div></div>`;
+          html += `</div>`;
         }
-        html += `<div class="ds-source">Source: ${esc(v.source)}</div>`;
+        html += `<div class="src-line">Source: ${esc(v.source)}</div>`;
       }
       html += `</div>`;
 
-      // Data completeness breakdown
-      html += `<div class="digest-section-block"><div class="ds-label">📊 Data Completeness</div>`;
-      for (const b of dc.breakdown) {
-        html += `<div class="ds-row"><span class="label">${esc(b.field)}</span><span class="val">${b.available ? '<span class="green">✓ available</span>' : '<span class="amber">— pending</span>'}</span></div>`;
+      // Donor influence (real, FEC)
+      html += `<div class="panel" id="f-${uid}"><div class="panel-title"><span>Donor Influence</span><span class="live-badge">live · openfec</span></div>`;
+      const dn = d.donor;
+      const hasFinance = dn.totalRaised !== null || dn.cashOnHand !== null;
+      if (!hasFinance) {
+        const reason = dn.gaps.length > 0 ? dn.gaps.join('; ') : 'No FEC totals filed for this candidate yet.';
+        html += `<div class="gap-card">📭 ${esc(reason)}</div>`;
+      } else {
+        // Top-line money figures
+        html += `<div class="real-stat"><span class="l">Total raised</span><span class="v">${fmtMoney(dn.totalRaised)}</span></div>`;
+        html += `<div class="real-stat"><span class="l">Cash on hand</span><span class="v">${fmtMoney(dn.cashOnHand)}</span></div>`;
+        html += `<div class="real-stat"><span class="l">Total spent</span><span class="v">${fmtMoney(dn.disbursements)}</span></div>`;
+        html += `<div class="real-stat"><span class="l">Debt</span><span class="v">${fmtMoney(dn.debt)}</span></div>`;
+        if (dn.reportingPeriod) html += `<div class="real-stat"><span class="l">Reporting period</span><span class="v">${esc(dn.reportingPeriod.start)} — ${esc(dn.reportingPeriod.end)}</span></div>`;
+
+        // Source mix
+        const hasMix = dn.individualPct !== null || dn.pacPct !== null || dn.selfFundedPct !== null;
+        if (hasMix) {
+          html += `<div style="margin-top:18px"><div class="ds-label" style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#9ca3af;margin-bottom:8px">Source of funds</div>`;
+          if (dn.individualPct !== null) html += renderBar('Individuals', 'indiv', dn.individualPct);
+          if (dn.pacPct !== null) html += renderBar('Other PACs', 'pac', dn.pacPct);
+          if (dn.selfFundedPct !== null) html += renderBar('Self-funded', 'self', dn.selfFundedPct);
+          html += `</div>`;
+        }
+
+        // Top employers
+        if (dn.topEmployers && dn.topEmployers.length > 0) {
+          const max = Math.max(...dn.topEmployers.map(e => e.total));
+          html += `<div style="margin-top:18px"><div class="ds-label" style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#9ca3af;margin-bottom:8px">Top contributing employers</div>`;
+          for (const e of dn.topEmployers.slice(0, 6)) {
+            const w = max > 0 ? Math.round((e.total / max) * 100) : 0;
+            html += `<div class="bar-row"><div class="bar-label" title="${esc(e.employer)}">${esc(e.employer)}</div><div class="bar-track"><div class="bar-fill" style="width:${w}%"></div></div><div class="bar-val">${fmtMoney(e.total)}</div></div>`;
+          }
+          html += `</div>`;
+        }
+
+        // Size buckets
+        if (dn.sizeBuckets && dn.sizeBuckets.length > 0) {
+          const total = dn.sizeBuckets.reduce((a, b) => a + b.total, 0);
+          html += `<div style="margin-top:18px"><div class="ds-label" style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#9ca3af;margin-bottom:8px">Contribution size mix</div>`;
+          for (const b of dn.sizeBuckets) {
+            const p = total > 0 ? Math.round((b.total / total) * 100) : 0;
+            html += renderBar(b.sizeBucket, 'size', p);
+          }
+          html += `</div>`;
+        }
+
+        if (dn.gaps.length > 0) {
+          html += `<div class="gap-card" style="margin-top:14px">${dn.gaps.map(g => esc(g)).join('<br>')}</div>`;
+        }
+        html += `<div class="src-line">Source: ${esc(dn.source)}</div>`;
       }
       html += `</div>`;
 
-      // Tracker placeholders — honest "not yet available" framing
-      html += `<div class="digest-section-block"><div class="ds-label">📜 Promise Tracker</div><div class="gap-card">${esc(trk.promises.reason)}</div></div>`;
-      html += `<div class="digest-section-block"><div class="ds-label">🔎 Language Drift</div><div class="gap-card">${esc(trk.languageDrift.reason)}</div></div>`;
-      html += `<div class="digest-section-block"><div class="ds-label">⚠ Ethics Logic Gate</div><div class="gap-card">${esc(trk.ethicsGate.reason)}</div></div>`;
-
+      // Ethics gate (demo)
+      html += `<div class="ethics" id="e-${uid}">
+        <div class="ethics-head"><div class="ethics-dot"></div><div class="ethics-title">Ethics Logic Gate — Active Flags</div>${d.ethicsIsDemo ? '<span class="demo-badge" style="margin-left:auto">demo data</span>' : ''}</div>`;
+      for (const flag of d.ethicsFlags) {
+        html += `<div class="ethics-flag"><div class="ethics-tri"></div><div class="ethics-text">${esc(flag.description)}</div></div>`;
+      }
       html += `</div>`;
+
+      html += `</div>`; // .dossier
       return html;
     }
 
     async function renderComparison() {
       if (selected.size < 2) { alert('Select at least 2 candidates to compare.'); return; }
-      const out = document.getElementById('digest-out');
+      const out = document.getElementById('dossier-out');
       const cs = Array.from(selected.values());
-      out.innerHTML = `<div class="digest-header"><h2>Side-by-side comparison</h2><span class="meta">Loading ${cs.length} candidates…</span></div>`;
+      out.innerHTML = `<div class="dossier-header"><h2>Side-by-side comparison</h2><span class="meta">Loading ${cs.length} candidates…</span></div>`;
       out.scrollIntoView({ behavior: 'smooth', block: 'start' });
       const digests = await Promise.all(cs.map(c => fetchDigest(c)));
       const cols = digests.length === 2 ? 'cols-2' : digests.length === 3 ? 'cols-3' : 'cols-4';
-      let html = `<div class="digest-header"><h2>Side-by-side comparison</h2><span class="meta">${digests.length} candidates · same data layout</span></div><div class="compare-grid ${cols}">`;
-      for (const d of digests) html += renderDigestCard(d);
+      let html = `<div class="dossier-header"><h2>Side-by-side comparison</h2><span class="meta">${digests.length} candidates · same data layout</span></div><div class="compare-grid ${cols}">`;
+      for (const d of digests) html += renderDossier(d);
       html += `</div>`;
       out.innerHTML = html;
     }
 
-    // ── MCP chat ────────────────────────────────────────────────────────────
+    // MCP chat
     const chatEl = document.getElementById('chat');
     chatEl.innerHTML = `<div class="chat-empty">Ask any question about Arizona — answered live from Census &amp; FEC datasets via MCP tools.</div>`;
-
-    function prefillChat(el) {
-      document.getElementById('chat-q').value = el.textContent.trim();
-      document.getElementById('chat-q').focus();
-    }
-
+    function prefillChat(el) { document.getElementById('chat-q').value = el.textContent.trim(); document.getElementById('chat-q').focus(); }
     function chatBubble(role, html, toolName) {
-      const empty = chatEl.querySelector('.chat-empty');
-      if (empty) empty.remove();
+      const empty = chatEl.querySelector('.chat-empty'); if (empty) empty.remove();
       const row = document.createElement('div');
       row.className = 'msg-row ' + role;
       const av = role === 'user' ? '👤' : '🔷';
@@ -453,38 +615,31 @@
       row.scrollIntoView({ behavior: 'smooth', block: 'end' });
       return row;
     }
-
     async function sendChat() {
       const qi = document.getElementById('chat-q');
-      const q = qi.value.trim();
-      if (!q) return;
+      const q = qi.value.trim(); if (!q) return;
       qi.value = '';
       chatBubble('user', esc(q));
       const loading = chatBubble('bot', '<span class="spin"></span>');
       document.getElementById('chat-send').disabled = true;
       try {
-        const res = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question: q, geoScope: { type: 'state', fips: '04' } })
-        });
+        const res = await fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ question: q, geoScope: { type:'state', fips:'04' } }) });
         const data = await res.json();
         const bubble = loading.querySelector('.msg-bubble');
         const tool = data.toolUsed ? `<div class="tool-tag">tool: ${esc(data.toolUsed)}</div>` : '';
         bubble.innerHTML = tool + esc(data.content || data.error || 'No response');
       } catch (err) {
         loading.querySelector('.msg-bubble').innerHTML = `<span style="color:#dc2626">Error: ${esc(String(err))}</span>`;
-      } finally {
-        document.getElementById('chat-send').disabled = false;
-        qi.focus();
-      }
+      } finally { document.getElementById('chat-send').disabled = false; qi.focus(); }
     }
+    document.getElementById('chat-q').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } });
 
-    document.getElementById('chat-q').addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
-    });
-
-    // ── Boot ────────────────────────────────────────────────────────────────
+    // Apply ?office= filter from onboarding
+    if (currentOffice) {
+      document.querySelectorAll('.filter-pill').forEach(p => {
+        p.classList.toggle('active', (p.dataset.office || '') === currentOffice);
+      });
+    }
     loadCandidates();
   </script>
 </body>

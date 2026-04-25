@@ -258,6 +258,9 @@ export interface FecCandidateList {
     name: string;
     office: string;
     district?: string;
+    party?: string;
+    party_full?: string;
+    incumbent_challenge_full?: string;
   }>;
   pagination: { count: number };
 }
