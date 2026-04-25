@@ -64,6 +64,8 @@ export class DatasetChatEngine {
 
   /**
    * Matches a question to the best tool using keyword scoring.
+   * Falls back to a secondary political-keyword map so questions about
+   * senators, representatives, infrastructure, etc. still route somewhere.
    */
   private matchTool(question: string): McpTool | null {
     let bestTool: McpTool | null = null;
@@ -83,8 +85,56 @@ export class DatasetChatEngine {
       }
     }
 
-    // Require a minimum match score
-    return bestScore >= 3 ? bestTool : null;
+    if (bestScore >= 3) return bestTool;
+
+    // Secondary routing: map common political/civic terms to the most
+    // relevant dataset tool so users don't hit the fallback wall.
+    const SECONDARY_ROUTES: Record<string, string> = {
+      // People / offices → current representatives (Congress.gov)
+      senator: 'current_representatives',
+      senate: 'current_representatives',
+      representative: 'current_representatives',
+      congressman: 'current_representatives',
+      congresswoman: 'current_representatives',
+      politician: 'current_representatives',
+      elected: 'current_representatives',
+      incumbent: 'current_representatives',
+      // Campaign / election → FEC finance
+      candidate: 'fec_finance',
+      election: 'fec_finance',
+      running: 'fec_finance',
+      donor: 'fec_finance',
+      // Infrastructure / policy topics → labor or economic data
+      infrastructure: 'labor_market',
+      road: 'labor_market',
+      transit: 'labor_market',
+      transportation: 'labor_market',
+      construction: 'labor_market',
+      bridge: 'labor_market',
+      // Social topics → health/community
+      crime: 'health_community',
+      safety: 'health_community',
+      hospital: 'health_community',
+      doctor: 'health_community',
+      medical: 'health_community',
+      // Education-adjacent
+      student: 'education_data',
+      teacher: 'education_data',
+      tuition: 'education_data',
+      // Housing-adjacent
+      affordable: 'housing_data',
+      homeless: 'housing_data',
+      shelter: 'housing_data',
+    };
+
+    for (const [keyword, toolName] of Object.entries(SECONDARY_ROUTES)) {
+      if (question.includes(keyword)) {
+        const matched = this.tools.find(t => t.name === toolName);
+        if (matched) return matched;
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -92,17 +142,18 @@ export class DatasetChatEngine {
    */
   private buildFallbackResponse(question: string): string {
     return (
-      'I can answer questions about Arizona using real Census Bureau and FEC data. ' +
-      'Try asking about:\n\n' +
+      `I wasn't able to find a dataset that directly answers "${question}". ` +
+      'I can pull real data from the Census Bureau and FEC for Arizona. Here are some things I can answer:\n\n' +
       '• Demographics — "What is the population of Arizona?"\n' +
       '• Income & poverty — "What is the median household income?"\n' +
       '• Education — "What is the high school graduation rate?"\n' +
       '• Housing — "What is the median home value?"\n' +
       '• Health — "What percentage of residents are uninsured?"\n' +
-      '• Jobs — "What is the unemployment rate?"\n' +
+      '• Jobs & labor — "What is the unemployment rate?"\n' +
       '• Community — "What is the veteran rate?" or "How many have broadband?"\n' +
-      '• Campaign finance — "Show FEC data for Arizona candidates"\n\n' +
-      'All answers come from real public datasets with source citations.'
+      '• Campaign finance — "Show FEC data for Arizona candidates"\n' +
+      '• Candidates — "Who is running for Senate in Arizona?"\n\n' +
+      'Try rephrasing your question around one of these topics.'
     );
   }
 

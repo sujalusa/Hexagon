@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hexagon — Civic Literacy Platform</title>
+  <title>Hexagon — Shield for American Democracy</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -12,8 +12,12 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       padding: 24px;
     }
-    .logo { font-size: 2.5rem; margin-bottom: 8px; }
-    h1 { font-size: 2rem; font-weight: 800; color: #1a1a1a; letter-spacing: -0.03em; margin-bottom: 6px; }
+    .logo-lockup { display: flex; flex-direction: column; align-items: center; margin-bottom: 6px; }
+    .logo-wordmark { display: flex; align-items: center; gap: 0; }
+    .logo-wordmark span { font-size: 2.4rem; font-weight: 900; color: #1b2a4a; letter-spacing: -0.03em; line-height: 1; }
+    .logo-shield { width: 52px; height: 52px; margin: 0 -2px; position: relative; top: 2px; }
+    .logo-tagline { font-size: 0.82rem; font-weight: 600; color: #6b7280; letter-spacing: 0.04em; margin-top: 2px; }
+    h1 { display: none; }
     .tagline { font-size: 1rem; color: #6b7280; margin-bottom: 36px; text-align: center; max-width: 460px; line-height: 1.5; }
 
     .step-indicator { display: flex; align-items: center; gap: 8px; margin-bottom: 28px; }
@@ -97,7 +101,26 @@
   </style>
 </head>
 <body>
-  <div class="logo">🔷</div>
+  <div class="logo-lockup">
+    <div class="logo-wordmark">
+      <span>HEXAG</span>
+      <svg class="logo-shield" viewBox="0 0 100 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Hexagon body -->
+        <path d="M50 2 L93 25 L93 70 L50 108 L7 70 L7 25 Z" fill="#1b2a4a"/>
+        <!-- Stars -->
+        <circle cx="36" cy="24" r="3.5" fill="#fff"/>
+        <circle cx="50" cy="18" r="3.5" fill="#fff"/>
+        <circle cx="64" cy="24" r="3.5" fill="#fff"/>
+        <!-- Checkmark -->
+        <path d="M30 52 L46 68 L72 36" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <!-- Red stripes -->
+        <path d="M22 78 L50 96 L78 78" stroke="#c53030" stroke-width="5" stroke-linecap="round" fill="none"/>
+        <path d="M28 88 L50 102 L72 88" stroke="#c53030" stroke-width="4" stroke-linecap="round" fill="none"/>
+      </svg>
+      <span>N</span>
+    </div>
+    <div class="logo-tagline">Shield for American Democracy</div>
+  </div>
   <h1>Hexagon</h1>
   <p class="tagline">A civic literacy platform that helps you understand political information — without telling you what to think.</p>
 

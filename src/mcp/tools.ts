@@ -6,6 +6,7 @@
 
 import { CensusClient } from '../data/CensusClient.js';
 import { FecClient } from '../data/FecClient.js';
+import { DataFetcher } from '../data/DataFetcher.js';
 import { ProfileBuilder } from '../portals/ProfileBuilder.js';
 import { NATIONAL_AVERAGES } from '../types/index.js';
 import type { GeoScope, DataGap, MeasurementEntry } from '../types/index.js';
@@ -265,6 +266,13 @@ export function createToolRegistry(census: CensusClient, fec: FecClient): McpToo
         const data: MeasurementEntry[] = [];
         const gaps: DataGap[] = [];
 
+        // Detect office type from query
+        const q = params.query;
+        let office: string | undefined;
+        if (/\bsenat/i.test(q)) office = 'S';
+        else if (/\b(house|representative|rep\b|congressman|congresswoman)/i.test(q)) office = 'H';
+        else if (/\bpresident/i.test(q)) office = 'P';
+
         if (params.entityId) {
           const result = await fec.fetchCandidateTotals(params.entityId);
           if ('description' in result) {
@@ -273,21 +281,76 @@ export function createToolRegistry(census: CensusClient, fec: FecClient): McpToo
             data.push(ProfileBuilder.buildMeasurementEntry('Total Raised', result.totalRaised, null, 'dollars', `OpenFEC API, ${result.reportingPeriod.start}–${result.reportingPeriod.end}`));
           }
         } else {
-          const result = await fec.fetchCandidates('AZ');
+          const result = await fec.fetchCandidates('AZ', office);
           if ('description' in result) {
             gaps.push(result);
           } else {
-            for (const c of result.results.slice(0, 5)) {
-              data.push(ProfileBuilder.buildMeasurementEntry(c.name, c.candidate_id, null, 'text', 'OpenFEC API'));
+            for (const c of result.results.slice(0, 10)) {
+              const label = c.incumbent_challenge_full ? `${c.name} (${c.party ?? '?'}, ${c.incumbent_challenge_full})` : c.name;
+              data.push(ProfileBuilder.buildMeasurementEntry(label, c.candidate_id, null, 'text', 'OpenFEC API'));
             }
           }
         }
 
+        const officeLabel = office === 'S' ? 'Senate' : office === 'H' ? 'House' : office === 'P' ? 'Presidential' : 'all';
         const narrative = data.length > 0
-          ? `FEC data: ${data.map(d => `${d.metricName}: ${fmtNum(d.localValue, d.unit)}`).join('. ')}.`
+          ? `Arizona ${officeLabel} candidates (FEC 2024 cycle): ${data.map(d => `${d.metricName}: ${d.localValue}`).join('. ')}.`
           : gaps.length > 0 ? gaps[0].description : 'No FEC data available.';
 
         return { toolName: 'fec_finance', data, narrative, sources: ['api.open.fec.gov'], dataGaps: gaps };
+      }
+    },
+
+    // ── Current Representatives (Congress.gov) ──────────────────────────────
+    {
+      name: 'current_representatives',
+      description: 'Current sitting senators and representatives for Arizona from Congress.gov',
+      keywords: ['senator', 'senate', 'representative', 'congress', 'congressman', 'congresswoman', 'who is', 'current', 'our senator', 'my senator', 'my representative', 'who represents', 'elected', 'incumbent'],
+      async execute(params) {
+        const data: MeasurementEntry[] = [];
+        const gaps: DataGap[] = [];
+        const fetcher = new DataFetcher();
+
+        const q = params.query;
+        const wantSenate = /\bsenat/i.test(q);
+        const wantHouse = /\b(house|representative|rep\b|congressman|congresswoman|district)/i.test(q);
+
+        // If neither specified, show both
+        const showSenate = wantSenate || !wantHouse;
+        const showHouse = wantHouse || !wantSenate;
+
+        if (showSenate) {
+          const senators = await fetcher.fetchStateDelegation('AZ', 'senate');
+          if (senators.length === 0) {
+            gaps.push({ description: 'Could not retrieve current AZ senators from Congress.gov', primarySources: ['api.congress.gov'] });
+          } else {
+            for (const s of senators) {
+              const name = `Sen. ${s.firstName.charAt(0) + s.firstName.slice(1).toLowerCase()} ${s.lastName.charAt(0) + s.lastName.slice(1).toLowerCase()}`;
+              const partyLabel = s.party === 'D' ? 'Democrat' : s.party === 'R' ? 'Republican' : s.party === 'I' ? 'Independent' : s.party ?? '?';
+              data.push(ProfileBuilder.buildMeasurementEntry(name, partyLabel, null, 'text', 'Congress.gov API'));
+            }
+          }
+        }
+
+        if (showHouse) {
+          const reps = await fetcher.fetchStateDelegation('AZ', 'house');
+          if (reps.length === 0) {
+            gaps.push({ description: 'Could not retrieve current AZ House members from Congress.gov', primarySources: ['api.congress.gov'] });
+          } else {
+            for (const r of reps) {
+              const name = `Rep. ${r.firstName.charAt(0) + r.firstName.slice(1).toLowerCase()} ${r.lastName.charAt(0) + r.lastName.slice(1).toLowerCase()} (District ${r.district ?? '?'})`;
+              const partyLabel = r.party === 'D' ? 'Democrat' : r.party === 'R' ? 'Republican' : r.party === 'I' ? 'Independent' : r.party ?? '?';
+              data.push(ProfileBuilder.buildMeasurementEntry(name, partyLabel, null, 'text', 'Congress.gov API'));
+            }
+          }
+        }
+
+        const chamberLabel = wantSenate && !wantHouse ? 'senators' : wantHouse && !wantSenate ? 'representatives' : 'federal delegation';
+        const narrative = data.length > 0
+          ? `Arizona's current ${chamberLabel}: ${data.map(d => `${d.metricName} — ${d.localValue}`).join('. ')}.`
+          : gaps.length > 0 ? gaps[0].description : 'Could not retrieve current representatives.';
+
+        return { toolName: 'current_representatives', data, narrative, sources: ['api.congress.gov'], dataGaps: gaps };
       }
     },
 
@@ -295,7 +358,7 @@ export function createToolRegistry(census: CensusClient, fec: FecClient): McpToo
     {
       name: 'labor_market',
       description: 'Unemployment rate, employment sectors',
-      keywords: ['job', 'employment', 'unemployment', 'work', 'labor', 'career', 'sector', 'industry', 'occupation', 'hiring'],
+      keywords: ['job', 'employment', 'unemployment', 'work', 'labor', 'career', 'sector', 'industry', 'occupation', 'hiring', 'infrastructure', 'transit', 'transportation', 'construction', 'commute'],
       async execute(params) {
         const data: MeasurementEntry[] = [];
         const gaps: DataGap[] = [];
