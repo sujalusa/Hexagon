@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "hexagon-datasets": {
+      "command": "npx",
+      "args": ["tsx", "src/mcp/mcpServer.ts"],
+      "env": {},
+      "disabled": false,
+      "autoApprove": [
+        "census_query",
+        "fec_candidates",
+        "fec_totals",
+        "compare_metric"
+      ]
+    }
+  }
+}
