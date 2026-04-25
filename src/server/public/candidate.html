@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hexagon — Candidate Portal</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif; background: #f5f3ee; color: #1a1a1a; min-height: 100vh; }
+
+    header { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; }
+    .logo-mark { font-size: 1.2rem; }
+    .logo-text { font-size: 1rem; font-weight: 800; letter-spacing: -0.02em; }
+    .header-sep { width: 1px; height: 20px; background: #e5e7eb; margin: 0 4px; }
+    .portal-badge { font-size: 0.78rem; font-weight: 600; color: #6b7280; }
+    .user-pill { margin-left: auto; display: flex; align-items: center; gap: 8px; background: #f5f3ee; border: 1px solid #e5e7eb; border-radius: 20px; padding: 4px 12px 4px 6px; }
+    .user-avatar { width: 24px; height: 24px; border-radius: 50%; background: #059669; color: #fff; font-size: 0.65rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .user-name { font-size: 0.82rem; font-weight: 600; }
+    .switch-link { font-size: 0.78rem; color: #6b7280; text-decoration: none; margin-left: 12px; }
+    .switch-link:hover { color: #1a1a1a; }
+
+    .page { max-width: 1100px; margin: 0 auto; padding: 28px 16px; }
+
+    /* ── Profile hero ── */
+    .hero { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 24px 28px; margin-bottom: 20px; display: flex; align-items: flex-start; gap: 20px; }
+    .hero-av { width: 56px; height: 56px; border-radius: 50%; background: #f0fdf4; border: 2px solid #bbf7d0; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; color: #15803d; flex-shrink: 0; }
+    .hero-info { flex: 1; }
+    .hero-name { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 3px; }
+    .hero-meta { font-size: 0.85rem; color: #6b7280; }
+    .hero-badge { margin-left: auto; background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; font-size: 0.82rem; font-weight: 700; padding: 6px 14px; border-radius: 20px; white-space: nowrap; }
+
+    /* ── Stat tiles ── */
+    .stat-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+    .stat-tile { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px 16px; }
+    .st-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: #9ca3af; margin-bottom: 8px; }
+    .st-val { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1; margin-bottom: 4px; }
+    .st-sub { font-size: 0.75rem; color: #6b7280; }
+    .st-vs { font-size: 0.72rem; color: #9ca3af; margin-top: 2px; }
+    .up { color: #16a34a; }
+    .down { color: #dc2626; }
+    .neutral { color: #1a1a1a; }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 4px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 4px; margin-bottom: 20px; overflow-x: auto; }
+    .tab { padding: 8px 16px; border-radius: 7px; font-size: 0.82rem; font-weight: 600; color: #6b7280; cursor: pointer; white-space: nowrap; transition: all 0.15s; border: none; background: transparent; }
+    .tab.active { background: #1a1a1a; color: #fff; }
+    .tab:hover:not(.active) { background: #f5f3ee; color: #374151; }
+
+    /* ── Section card ── */
+    .section-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden; margin-bottom: 16px; }
+    .sc-header { padding: 16px 20px 12px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; }
+    .sc-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #9ca3af; }
+    .sc-body { padding: 0; }
+
+    /* ── Metric rows ── */
+    .metric-row { display: flex; align-items: center; padding: 13px 20px; border-bottom: 1px solid #f9f9f7; }
+    .metric-row:last-child { border-bottom: none; }
+    .mr-name { flex: 1; font-size: 0.88rem; color: #374151; }
+    .mr-right { text-align: right; }
+    .mr-val { font-size: 0.95rem; font-weight: 700; color: #1a1a1a; }
+    .mr-nat { font-size: 0.72rem; color: #9ca3af; margin-top: 1px; }
+    .mr-bar-wrap { flex: 1; max-width: 120px; margin: 0 16px; }
+    .mr-bar-bg { height: 5px; background: #f3f4f6; border-radius: 3px; overflow: hidden; }
+    .mr-bar-fill { height: 100%; border-radius: 3px; background: #1a1a1a; transition: width 0.6s ease; }
+    .mr-bar-fill.green { background: #16a34a; }
+    .mr-bar-fill.amber { background: #d97706; }
+    .mr-bar-fill.red { background: #dc2626; }
+
+    /* ── Two-col grid ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    /* ── Key divergences ── */
+    .divergence-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; padding: 16px 20px; }
+    .div-card { background: #f9f9f7; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px; }
+    .div-metric { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #6b7280; margin-bottom: 6px; }
+    .div-local { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 2px; }
+    .div-nat { font-size: 0.75rem; color: #9ca3af; }
+    .div-source { font-size: 0.65rem; color: #d1d5db; margin-top: 4px; }
+
+    /* ── Loading / empty ── */
+    .loading-state { text-align: center; padding: 60px 24px; color: #9ca3af; }
+    .spin { display: inline-block; width: 28px; height: 28px; border: 3px solid #e5e7eb; border-top-color: #1a1a1a; border-radius: 50%; animation: spin 0.7s linear infinite; margin-bottom: 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-state p { font-size: 0.88rem; }
+
+    .data-gap-note { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 10px 14px; font-size: 0.8rem; color: #9a3412; margin: 8px 20px; }
+
+    @media (max-width: 768px) {
+      .stat-tiles { grid-template-columns: repeat(2, 1fr); }
+      .two-col { grid-template-columns: 1fr; }
+      .hero { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="logo-mark">🔷</span>
+    <span class="logo-text">Hexagon</span>
+    <div class="header-sep"></div>
+    <span class="portal-badge">Candidate Portal</span>
+    <div class="user-pill">
+      <div class="user-avatar" id="hdr-av">?</div>
+      <span class="user-name" id="hdr-name">Candidate</span>
+    </div>
+    <a href="/" class="switch-link">Switch portal</a>
+  </header>
+
+  <div class="page">
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-av" id="hero-av">?</div>
+      <div class="hero-info">
+        <div class="hero-name" id="hero-name">Loading…</div>
+        <div class="hero-meta" id="hero-meta">Arizona · Constituent Profile</div>
+      </div>
+      <div class="hero-badge" id="hero-badge">ACS 2023 Data</div>
+    </div>
+
+    <!-- Stat tiles -->
+    <div class="stat-tiles" id="stat-tiles">
+      <div class="stat-tile"><div class="st-label">Total Population</div><div class="st-val neutral" id="st-pop">—</div><div class="st-sub">Arizona</div></div>
+      <div class="stat-tile"><div class="st-label">Median Age</div><div class="st-val neutral" id="st-age">—</div><div class="st-sub">years <span class="st-vs" id="st-age-vs"></span></div></div>
+      <div class="stat-tile"><div class="st-label">Median Household Income</div><div class="st-val neutral" id="st-inc">—</div><div class="st-sub"><span class="st-vs" id="st-inc-vs"></span></div></div>
+      <div class="stat-tile"><div class="st-label">Uninsured Rate</div><div class="st-val neutral" id="st-ins">—</div><div class="st-sub"><span class="st-vs" id="st-ins-vs"></span></div></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('overview')" id="t-overview">Overview</button>
+      <button class="tab" onclick="showTab('demographics')" id="t-demographics">Demographics</button>
+      <button class="tab" onclick="showTab('economic')" id="t-economic">Economic</button>
+      <button class="tab" onclick="showTab('labor')" id="t-labor">Labor & Education</button>
+      <button class="tab" onclick="showTab('housing')" id="t-housing">Housing</button>
+      <button class="tab" onclick="showTab('community')" id="t-community">Community</button>
+      <button class="tab" onclick="showTab('finance')" id="t-finance">Finance</button>
+    </div>
+
+    <!-- Content area -->
+    <div id="content">
+      <div class="loading-state">
+        <div class="spin"></div>
+        <p>Fetching live data from US Census Bureau ACS API…</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const p = new URLSearchParams(location.search);
+    const userName = p.get('name') || 'Candidate';
+    const officeRaw = p.get('office') || 'city';
+    const fecId = p.get('fecId') || null;
+    const officeLabels = {city:'City Council',county:'County Supervisor',state_leg:'State Legislature',school:'School Board',congress:'U.S. Congress',senate:'U.S. Senate'};
+    const officeLabel = officeLabels[officeRaw] || officeRaw;
+    const initials = userName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) || 'C';
+
+    document.getElementById('hdr-av').textContent = initials;
+    document.getElementById('hdr-name').textContent = userName;
+    document.getElementById('hero-av').textContent = initials;
+    document.getElementById('hero-name').textContent = userName;
+    document.getElementById('hero-meta').textContent = officeLabel + ' · Arizona · Constituent Profile';
+
+    let profileData = null;
+    let activeTab = 'overview';
+
+    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function fmt(val, unit) {
+      if (val === null || val === undefined || val === 'N/A' || String(val).includes('not available')) return '—';
+      const n = Number(val);
+      if (isNaN(n)) return esc(String(val));
+      if (unit === 'dollars') return '$' + n.toLocaleString('en-US', {maximumFractionDigits:0});
+      if (unit === 'percent') return n.toFixed(1) + '%';
+      if (unit === 'minutes') return n.toFixed(0) + ' min';
+      if (unit === 'years') return n.toFixed(1);
+      if (unit === 'persons') return n.toFixed(2);
+      if (unit === 'count') return n.toLocaleString('en-US', {maximumFractionDigits:0});
+      return n.toLocaleString('en-US', {maximumFractionDigits:1});
+    }
+
+    function vsNat(local, nat, unit, higherIsBetter) {
+      if (!nat || local === '—' || local === null) return '';
+      const l = Number(local), n = Number(nat);
+      if (isNaN(l) || isNaN(n)) return '';
+      const diff = l - n;
+      const pct = Math.abs(diff / n * 100).toFixed(0);
+      if (Math.abs(diff) < 0.5) return `<span style="color:#9ca3af">≈ US avg</span>`;
+      const up = diff > 0;
+      const good = higherIsBetter ? up : !up;
+      const color = good ? '#16a34a' : '#dc2626';
+      const arrow = up ? '↑' : '↓';
+      return `<span style="color:${color}">${arrow} ${pct}% vs US avg</span>`;
+    }
+
+    function metricRow(name, entry, higherIsBetter, showBar) {
+      if (!entry) return '';
+      const local = fmt(entry.localValue, entry.unit);
+      const nat = entry.nationalAverage !== null ? fmt(entry.nationalAverage, entry.unit) : null;
+      const vs = nat ? vsNat(entry.localValue, entry.nationalAverage, entry.unit, higherIsBetter) : '';
+      let barHtml = '';
+      if (showBar && entry.unit === 'percent') {
+        const pct = Math.min(100, Math.max(0, Number(entry.localValue) || 0));
+        const natPct = Math.min(100, Math.max(0, Number(entry.nationalAverage) || 0));
+        const diff = pct - natPct;
+        const barClass = higherIsBetter ? (diff >= 0 ? 'green' : 'red') : (diff <= 0 ? 'green' : 'red');
+        barHtml = `<div class="mr-bar-wrap"><div class="mr-bar-bg"><div class="mr-bar-fill ${barClass}" style="width:${pct}%"></div></div></div>`;
+      }
+      return `<div class="metric-row">
+        <div class="mr-name">${esc(name)}</div>
+        ${barHtml}
+        <div class="mr-right">
+          <div class="mr-val">${local}</div>
+          ${nat ? `<div class="mr-nat">US avg: ${nat} ${vs}</div>` : ''}
+        </div>
+      </div>`;
+    }
+
+    function sectionCard(title, icon, rows) {
+      if (!rows.trim()) return '';
+      return `<div class="section-card">
+        <div class="sc-header"><span style="font-size:1rem">${icon}</span><span class="sc-title">${esc(title)}</span></div>
+        <div class="sc-body">${rows}</div>
+      </div>`;
+    }
+
+    function showTab(tab) {
+      activeTab = tab;
+      ['overview','demographics','economic','labor','housing','community','finance'].forEach(t => {
+        document.getElementById('t-'+t).classList.toggle('active', t === tab);
+      });
+      if (profileData) renderTab(tab);
+    }
+
+    function renderTab(tab) {
+      const d = profileData;
+      const content = document.getElementById('content');
+      let html = '';
+
+      if (tab === 'overview') {
+        // Key divergences
+        if (d.keyIssuesContext?.length) {
+          html += `<div class="section-card" style="margin-bottom:16px">
+            <div class="sc-header"><span style="font-size:1rem">📊</span><span class="sc-title">Notable Divergences from National Averages</span></div>
+            <div class="divergence-grid">`;
+          for (const ki of d.keyIssuesContext) {
+            html += `<div class="div-card">
+              <div class="div-metric">${esc(ki.metricName)}</div>
+              <div class="div-local">${fmt(ki.localValue, ki.unit)}</div>
+              <div class="div-nat">US avg: ${fmt(ki.nationalAverage, ki.unit)}</div>
+              <div class="div-source">${esc(ki.source)}</div>
+            </div>`;
+          }
+          html += `</div></div>`;
+        }
+        // Quick overview grid
+        html += `<div class="two-col">`;
+        html += sectionCard('Demographics', '👥',
+          metricRow('Total Population', d.demographics?.totalPopulation, true, false) +
+          metricRow('Median Age', d.demographics?.medianAge, false, false)
+        );
+        html += sectionCard('Economic', '💰',
+          metricRow('Median Household Income', d.economic?.medianHouseholdIncome, true, false) +
+          metricRow('Poverty Rate', d.economic?.povertyRate, false, true)
+        );
+        html += sectionCard('Education', '🎓',
+          metricRow('High School Grad Rate', d.education?.highSchoolGradRate, true, true) +
+          metricRow("Bachelor's Degree Rate", d.education?.bachelorsDegreeRate, true, true)
+        );
+        html += sectionCard('Health', '🏥',
+          metricRow('Uninsured Rate', d.healthInsurance?.uninsuredRate, false, true)
+        );
+        html += `</div>`;
+
+      } else if (tab === 'demographics') {
+        html += sectionCard('Age Distribution', '📅',
+          metricRow('Median Age', d.demographics?.medianAge, false, false) +
+          (d.demographics?.ageDistribution || []).map(e => metricRow(e.metricName, e, false, true)).join('')
+        );
+        html += sectionCard('Race & Ethnicity', '🌍',
+          (d.demographics?.raceEthnicity || []).map(e => metricRow(e.metricName, e, false, true)).join('')
+        );
+
+      } else if (tab === 'economic') {
+        html += sectionCard('Income & Poverty', '💰',
+          metricRow('Median Household Income', d.economic?.medianHouseholdIncome, true, false) +
+          metricRow('Per Capita Income', d.economic?.perCapitaIncome, true, false) +
+          metricRow('Poverty Rate', d.economic?.povertyRate, false, true)
+        );
+
+      } else if (tab === 'labor') {
+        html += sectionCard('Labor Market', '🏭',
+          metricRow('Unemployment Rate', d.laborMarket?.unemploymentRate, false, true) +
+          (d.laborMarket?.topEmploymentSectors || []).map(e => metricRow(e.metricName, e, false, true)).join('') +
+          (d.laborMarket?.medianEarningsByOccupation || []).map(e => metricRow(e.metricName, e, true, false)).join('')
+        );
+        html += sectionCard('Education Attainment', '🎓',
+          metricRow('High School Graduation Rate', d.education?.highSchoolGradRate, true, true) +
+          metricRow("Bachelor's Degree Rate", d.education?.bachelorsDegreeRate, true, true)
+        );
+
+      } else if (tab === 'housing') {
+        html += sectionCard('Housing', '🏠',
+          metricRow('Median Home Value', d.housing?.medianHomeValue, true, false) +
+          metricRow('Owner-Occupied Rate', d.housing?.ownerOccupiedRate, false, true) +
+          metricRow('Renter-Occupied Rate', d.housing?.renterOccupiedRate, false, true)
+        );
+        html += sectionCard('Household Composition', '👨‍👩‍👧',
+          metricRow('Average Household Size', d.householdComposition?.averageHouseholdSize, false, false) +
+          metricRow('Single-Parent Household Rate', d.householdComposition?.singleParentHouseholdRate, false, true)
+        );
+
+      } else if (tab === 'community') {
+        html += `<div class="two-col">`;
+        html += sectionCard('Language Access', '🌐',
+          metricRow('Non-English Households', d.languageAccess?.nonEnglishHouseholdRate, false, true) +
+          metricRow('Limited English Proficiency', d.languageAccess?.limitedEnglishProficiencyRate, false, true)
+        );
+        html += sectionCard('Commute & Transit', '🚗',
+          metricRow('Mean Travel Time', d.commute?.meanTravelTimeMinutes, false, false) +
+          metricRow('Drive Alone Rate', d.commute?.driveAloneRate, false, true) +
+          metricRow('Public Transit Rate', d.commute?.publicTransitRate, true, true)
+        );
+        html += sectionCard('Health & Disability', '🏥',
+          metricRow('Uninsured Rate', d.healthInsurance?.uninsuredRate, false, true) +
+          metricRow('Disability Rate (Under 65)', d.disability?.disabilityRateUnder65, false, true)
+        );
+        html += sectionCard('Veterans & Broadband', '🎖️',
+          metricRow('Veteran Rate', d.veterans?.veteranRate, false, false) +
+          metricRow('Broadband Subscription Rate', d.broadband?.broadbandSubscriptionRate, true, true)
+        );
+        html += `</div>`;
+
+      } else if (tab === 'finance') {
+        if (d.fecFinance?.dataGap) {
+          html += `<div class="data-gap-note">📭 ${esc(d.fecFinance.dataGap.description)}</div>`;
+        } else if (d.fecFinance?.candidateTotals?.length) {
+          html += sectionCard('Your FEC Finance Totals', '💵',
+            (d.fecFinance.candidateTotals || []).map(e => metricRow(e.metricName, e, true, false)).join('')
+          );
+        } else {
+          html += `<div class="section-card"><div class="sc-body"><div class="metric-row"><div class="mr-name" style="color:#9ca3af">No FEC candidate ID provided. Enter your FEC ID in onboarding to see finance data.</div></div></div></div>`;
+        }
+        if (d.fecFinance?.raceTotals?.length) {
+          html += sectionCard('Race Finance Totals', '📊',
+            (d.fecFinance.raceTotals || []).map(e => metricRow(e.metricName, e, false, false)).join('')
+          );
+        }
+      }
+
+      // Data gaps footer
+      if (d.dataGaps?.length) {
+        html += `<div class="data-gap-note" style="margin-top:8px">📭 ${d.dataGaps.length} data gap(s) — some Census variables were unavailable for this geography.</div>`;
+      }
+
+      content.innerHTML = html || `<div class="section-card"><div class="sc-body"><div class="metric-row"><div class="mr-name" style="color:#9ca3af">No data available for this section.</div></div></div></div>`;
+    }
+
+    function updateStatTiles(d) {
+      const pop = d.demographics?.totalPopulation;
+      const age = d.demographics?.medianAge;
+      const inc = d.economic?.medianHouseholdIncome;
+      const ins = d.healthInsurance?.uninsuredRate;
+
+      if (pop) document.getElementById('st-pop').textContent = fmt(pop.localValue, pop.unit);
+      if (age) {
+        document.getElementById('st-age').textContent = fmt(age.localValue, age.unit);
+        document.getElementById('st-age-vs').innerHTML = vsNat(age.localValue, age.nationalAverage, age.unit, false);
+      }
+      if (inc) {
+        document.getElementById('st-inc').textContent = fmt(inc.localValue, inc.unit);
+        document.getElementById('st-inc-vs').innerHTML = vsNat(inc.localValue, inc.nationalAverage, inc.unit, true);
+      }
+      if (ins) {
+        document.getElementById('st-ins').textContent = fmt(ins.localValue, ins.unit);
+        document.getElementById('st-ins-vs').innerHTML = vsNat(ins.localValue, ins.nationalAverage, ins.unit, false);
+      }
+    }
+
+    // Load profile on page load
+    async function loadProfile() {
+      try {
+        const body = { geoScope: { type: 'state', fips: '04' } };
+        if (fecId) body.candidateFecId = fecId;
+        const res = await fetch('/api/candidate/profile', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(body)
+        });
+        profileData = await res.json();
+        if (profileData.error) throw new Error(profileData.error);
+        const ts = new Date(profileData.generatedAt).toLocaleTimeString();
+        document.getElementById('hero-badge').textContent = 'ACS 2023 · Live data · ' + ts;
+        updateStatTiles(profileData);
+        renderTab(activeTab);
+      } catch(err) {
+        document.getElementById('content').innerHTML = `<div class="section-card"><div class="sc-body"><div class="metric-row"><div class="mr-name" style="color:#dc2626">Error loading profile: ${esc(String(err))}</div></div></div></div>`;
+      }
+    }
+
+    loadProfile();
+  </script>
+</body>
+</html>
